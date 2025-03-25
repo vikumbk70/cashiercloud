@@ -23,8 +23,6 @@ export interface Receipt {
   tax: number;
   total: number;
   paymentMethod: string;
-  customerName?: string;
-  customerEmail?: string;
   createdAt: Date;
 }
 

@@ -9,7 +9,7 @@ import {
   X, 
   CreditCard, 
   Receipt as ReceiptIcon, 
-  AlertCircle
+  Printer
 } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -44,9 +44,9 @@ export default function CheckoutPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [amountPaid, setAmountPaid] = useState("");
+  const [printReceipt, setPrintReceipt] = useState(true);
   
   const TAX_RATE = 0.10; // 10% tax rate
   
@@ -145,11 +145,25 @@ export default function CheckoutPage() {
     return calculateSubtotal() + calculateTax();
   };
   
+  const calculateChange = () => {
+    const paid = parseFloat(amountPaid) || 0;
+    return paid - calculateTotal();
+  };
+  
   const handleCheckout = () => {
     if (cart.length === 0) {
       toast({
         title: "Empty Cart",
         description: "Please add items to your cart before checking out.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (paymentMethod === "cash" && (!amountPaid || parseFloat(amountPaid) < calculateTotal())) {
+      toast({
+        title: "Insufficient Payment",
+        description: "The amount paid must be at least equal to the total.",
         variant: "destructive"
       });
       return;
@@ -161,9 +175,7 @@ export default function CheckoutPage() {
       subtotal: calculateSubtotal(),
       tax: calculateTax(),
       total: calculateTotal(),
-      paymentMethod,
-      customerName: customerName || undefined,
-      customerEmail: customerEmail || undefined
+      paymentMethod
     };
     
     const newReceipt = createReceipt(receipt);
@@ -173,6 +185,14 @@ export default function CheckoutPage() {
       title: "Purchase Complete",
       description: `Receipt #${newReceipt.id.slice(0, 8)} has been created.`
     });
+    
+    if (printReceipt) {
+      // In a real system, this would trigger receipt printing
+      toast({
+        title: "Printing Receipt",
+        description: "Receipt sent to printer."
+      });
+    }
     
     // Clear cart after checkout
     clearCart();
@@ -362,27 +382,6 @@ export default function CheckoutPage() {
                   
                   <div className="grid gap-4 py-4">
                     <div>
-                      <Label htmlFor="customer-name">Customer Name (Optional)</Label>
-                      <Input
-                        id="customer-name"
-                        value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
-                        className="mt-1"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="customer-email">Customer Email (Optional)</Label>
-                      <Input
-                        id="customer-email"
-                        type="email"
-                        value={customerEmail}
-                        onChange={(e) => setCustomerEmail(e.target.value)}
-                        className="mt-1"
-                      />
-                    </div>
-                    
-                    <div>
                       <Label>Payment Method</Label>
                       <RadioGroup 
                         className="flex gap-4 mt-2" 
@@ -398,6 +397,40 @@ export default function CheckoutPage() {
                           <Label htmlFor="card">Card</Label>
                         </div>
                       </RadioGroup>
+                    </div>
+                    
+                    {paymentMethod === "cash" && (
+                      <div>
+                        <Label htmlFor="amount-paid">Amount Paid</Label>
+                        <Input
+                          id="amount-paid"
+                          type="number"
+                          value={amountPaid}
+                          onChange={(e) => setAmountPaid(e.target.value)}
+                          className="mt-1"
+                          placeholder="0.00"
+                          min={calculateTotal()}
+                        />
+                        {amountPaid && parseFloat(amountPaid) >= calculateTotal() && (
+                          <div className="text-sm mt-2">
+                            <span className="font-medium">Change:</span> {formatPrice(calculateChange())}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="print-receipt"
+                        checked={printReceipt}
+                        onChange={() => setPrintReceipt(!printReceipt)}
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <Label htmlFor="print-receipt" className="flex items-center gap-1">
+                        <Printer className="h-4 w-4" />
+                        Print Receipt
+                      </Label>
                     </div>
                     
                     <Separator />
