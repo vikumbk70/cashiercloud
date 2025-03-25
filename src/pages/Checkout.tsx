@@ -8,7 +8,7 @@ import {
   Trash, 
   X, 
   CreditCard, 
-  Receipt, 
+  Receipt as ReceiptIcon, 
   AlertCircle
 } from "lucide-react";
 import { Layout } from "@/components/Layout";

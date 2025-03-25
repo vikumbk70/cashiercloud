@@ -17,7 +17,8 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogTrigger,
-  DialogClose
+  DialogClose,
+  DialogFooter
 } from "@/components/ui/dialog";
 import { 
   Card, 
@@ -28,7 +29,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Eye, Printer, Receipt, Search, SortAsc, SortDesc, X } from "lucide-react";
+import { Calendar, Eye, Printer, Receipt as ReceiptIcon, Search, SortAsc, SortDesc, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -257,7 +258,7 @@ export default function ReceiptsPage() {
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                     <div className="flex flex-col items-center justify-center space-y-1">
-                      <Receipt className="h-10 w-10 text-muted-foreground/50" />
+                      <ReceiptIcon className="h-10 w-10 text-muted-foreground/50" />
                       <div className="font-medium">No receipts found</div>
                       <div className="text-sm">Process a sale to generate receipts.</div>
                     </div>
