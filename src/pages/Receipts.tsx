@@ -29,7 +29,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Eye, Printer, Receipt as ReceiptIcon, Search, SortAsc, SortDesc, X } from "lucide-react";
+import { Calendar, Eye, Printer, ReceiptIcon, Search, SortAsc, SortDesc, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -69,8 +69,6 @@ export default function ReceiptsPage() {
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(receipt => 
-        receipt.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        receipt.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         receipt.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         receipt.items.some(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
       );
@@ -246,7 +244,6 @@ export default function ReceiptsPage() {
               <TableRow>
                 <TableHead>Receipt ID</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Customer</TableHead>
                 <TableHead>Items</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Payment</TableHead>
@@ -271,11 +268,6 @@ export default function ReceiptsPage() {
                       #{receipt.id.slice(0, 8)}
                     </TableCell>
                     <TableCell>{formatDate(receipt.createdAt)}</TableCell>
-                    <TableCell>
-                      {receipt.customerName || (
-                        <span className="text-muted-foreground text-sm">Guest</span>
-                      )}
-                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <span>{receipt.items.length}</span>
@@ -326,12 +318,6 @@ export default function ReceiptsPage() {
                                 <span>Date:</span>
                                 <span>{formatDate(receipt.createdAt)}</span>
                               </div>
-                              {receipt.customerName && (
-                                <div className="flex justify-between">
-                                  <span>Customer:</span>
-                                  <span>{receipt.customerName}</span>
-                                </div>
-                              )}
                               <div className="flex justify-between">
                                 <span>Payment Method:</span>
                                 <span className="capitalize">{receipt.paymentMethod}</span>

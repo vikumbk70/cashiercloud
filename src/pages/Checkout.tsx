@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   Search, 
   ShoppingCart, 
@@ -8,7 +8,7 @@ import {
   Trash, 
   X, 
   CreditCard, 
-  Receipt as ReceiptIcon, 
+  ReceiptIcon, 
   Printer
 } from "lucide-react";
 import { Layout } from "@/components/Layout";
@@ -47,6 +47,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [amountPaid, setAmountPaid] = useState("");
   const [printReceipt, setPrintReceipt] = useState(true);
+  const receiptRef = useRef<HTMLDivElement>(null);
   
   const TAX_RATE = 0.10; // 10% tax rate
   
@@ -128,9 +129,8 @@ export default function CheckoutPage() {
   
   const clearCart = () => {
     setCart([]);
-    setCustomerName("");
-    setCustomerEmail("");
     setPaymentMethod("cash");
+    setAmountPaid("");
   };
   
   const calculateSubtotal = () => {
@@ -148,6 +148,46 @@ export default function CheckoutPage() {
   const calculateChange = () => {
     const paid = parseFloat(amountPaid) || 0;
     return paid - calculateTotal();
+  };
+  
+  const printReceiptHandler = () => {
+    if (!receiptRef.current) return;
+    
+    const printWindow = window.open('', '', 'width=600,height=600');
+    
+    if (!printWindow) {
+      toast({
+        title: "Print Failed",
+        description: "Could not open print window. Please check your browser settings.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    printWindow.document.write('<html><head><title>Print Receipt</title>');
+    printWindow.document.write('<style>');
+    printWindow.document.write(`
+      body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+      .receipt { max-width: 300px; margin: 0 auto; }
+      .header { text-align: center; margin-bottom: 20px; }
+      .items { margin-bottom: 20px; }
+      .item { display: flex; justify-content: space-between; margin-bottom: 8px; }
+      .summary { border-top: 1px solid #eee; padding-top: 10px; }
+      .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+      .total { font-weight: bold; border-top: 1px solid #eee; padding-top: 5px; margin-top: 5px; }
+      .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #999; }
+    `);
+    printWindow.document.write('</style></head><body>');
+    printWindow.document.write(receiptRef.current.innerHTML);
+    printWindow.document.write('</body></html>');
+    
+    printWindow.document.close();
+    printWindow.focus();
+    
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
   };
   
   const handleCheckout = () => {
@@ -188,6 +228,7 @@ export default function CheckoutPage() {
     
     if (printReceipt) {
       // In a real system, this would trigger receipt printing
+      printReceiptHandler();
       toast({
         title: "Printing Receipt",
         description: "Receipt sent to printer."
@@ -379,6 +420,64 @@ export default function CheckoutPage() {
                       Process payment and generate receipt.
                     </DialogDescription>
                   </DialogHeader>
+                  
+                  <div ref={receiptRef} className="hidden">
+                    <div className="text-center">
+                      <h3 className="font-bold text-lg">SimplePOS</h3>
+                      <p className="text-sm text-muted-foreground">123 Main Street, City</p>
+                      <p className="text-sm text-muted-foreground">Tel: (123) 456-7890</p>
+                    </div>
+                            
+                    <div className="text-sm space-y-1 mt-4">
+                      <div className="flex justify-between">
+                        <span>Date:</span>
+                        <span>{new Date().toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Payment Method:</span>
+                        <span className="capitalize">{paymentMethod}</span>
+                      </div>
+                    </div>
+                            
+                    <div className="my-4">
+                      <p className="font-medium mb-2">Items</p>
+                      <div className="space-y-2">
+                        {cart.map((item, index) => (
+                          <div key={index} className="flex justify-between text-sm">
+                            <div className="flex-1">
+                              <div className="flex justify-between">
+                                <span>{item.name}</span>
+                                <span>{formatPrice(item.price * item.quantity)}</span>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {item.quantity} x {formatPrice(item.price)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                            
+                    <div className="space-y-1 pt-4 border-t">
+                      <div className="flex justify-between text-sm">
+                        <span>Subtotal:</span>
+                        <span>{formatPrice(calculateSubtotal())}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Tax:</span>
+                        <span>{formatPrice(calculateTax())}</span>
+                      </div>
+                      <div className="flex justify-between font-bold">
+                        <span>Total:</span>
+                        <span>{formatPrice(calculateTotal())}</span>
+                      </div>
+                    </div>
+                            
+                    <div className="text-center pt-4 text-xs text-muted-foreground">
+                      <p>Thank you for your purchase!</p>
+                      <p>Please keep this receipt for your records.</p>
+                    </div>
+                  </div>
                   
                   <div className="grid gap-4 py-4">
                     <div>
