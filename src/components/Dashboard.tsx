@@ -11,14 +11,22 @@ export function Dashboard() {
   const { data: salesData, isLoading, error } = useQuery({
     queryKey: ['dashboard'],
     queryFn: getDashboardData,
-    onError: (error) => {
-      toast.error("Failed to load dashboard data", {
-        description: "Using cached data from localStorage instead.",
-        duration: 5000,
-      });
-      console.error('Error loading dashboard data:', error);
+    meta: {
+      onError: () => {
+        toast.error("Failed to load dashboard data", {
+          description: "Using cached data from localStorage instead.",
+          duration: 5000,
+        });
+      }
     }
   });
+
+  // Log errors to console for debugging
+  useEffect(() => {
+    if (error) {
+      console.error('Error loading dashboard data:', error);
+    }
+  }, [error]);
 
   if (isLoading) {
     return <div className="p-8">Loading dashboard data...</div>;
