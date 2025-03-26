@@ -32,11 +32,6 @@ export function Dashboard() {
     return <div className="p-8">Loading dashboard data...</div>;
   }
 
-  if (error) {
-    console.error('Error loading dashboard data:', error);
-    return <div className="p-8 text-destructive">Error loading dashboard data. Please try again later.</div>;
-  }
-
   return (
     <div className="flex flex-col space-y-4">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
