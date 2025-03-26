@@ -51,7 +51,7 @@ export const updateProduct = async (
   updates: Partial<Product>
 ): Promise<Product | undefined> => {
   return fetchAPI<Product>(`/products/${id}`, {
-    method: "PUT",
+    method: "PATCH", // Changed from PUT to PATCH as per your endpoint specification
     body: JSON.stringify(updates),
   });
 };
@@ -63,22 +63,29 @@ export const deleteProduct = async (id: string): Promise<boolean> => {
   return true;
 };
 
+// This helper function might be needed in your backend implementation
 export const updateStock = async (items: CartItem[]): Promise<void> => {
-  // This would typically update multiple products' stock in a transaction
-  // For now, we'll update each product individually
-  for (const item of items) {
-    const product = await getProduct(item.id);
-    if (product) {
-      await updateProduct(item.id, { 
-        stock: product.stock - item.quantity 
-      });
-    }
-  }
+  // Backend should handle stock updates when processing receipts
+  // This is now a no-op as the backend will handle this
+  console.log("Stock updates should be handled by the backend");
 };
 
 // Receipt operations
-export const getReceipts = async (): Promise<Receipt[]> => {
-  const receipts = await fetchAPI<Receipt[]>("/receipts");
+export const getReceipts = async (
+  dateFrom?: Date,
+  dateTo?: Date
+): Promise<Receipt[]> => {
+  let url = "/receipts";
+  
+  // Add query parameters for date filtering if provided
+  if (dateFrom || dateTo) {
+    const params = new URLSearchParams();
+    if (dateFrom) params.append("dateFrom", dateFrom.toISOString());
+    if (dateTo) params.append("dateTo", dateTo.toISOString());
+    url += `?${params.toString()}`;
+  }
+  
+  const receipts = await fetchAPI<Receipt[]>(url);
   // Convert string dates to Date objects
   return receipts.map(receipt => ({
     ...receipt,
@@ -102,18 +109,22 @@ export const createReceipt = async (
     body: JSON.stringify(receipt),
   });
   
-  // Update stock after creating receipt
-  await updateStock(receipt.items);
-  
   return {
     ...newReceipt,
     createdAt: new Date(newReceipt.createdAt)
   };
 };
 
-// Analytics
-export const getSalesData = async (): Promise<SalesData> => {
-  return fetchAPI<SalesData>("/sales-data");
+// Dashboard analytics
+export const getDashboardData = async (): Promise<SalesData> => {
+  return fetchAPI<SalesData>("/dashboard");
+};
+
+// Development only - seed data
+export const seedDemoData = async (): Promise<void> => {
+  await fetchAPI("/seed", {
+    method: "POST"
+  });
 };
 
 // Add a fallback to localStorage if the API is not available
@@ -163,17 +174,9 @@ export const useFallbackDb = () => {
         return localDb.deleteProduct(id);
       }
     },
-    updateStock: async (items: CartItem[]) => {
+    getReceipts: async (dateFrom?: Date, dateTo?: Date) => {
       try {
-        return await updateStock(items);
-      } catch (error) {
-        console.warn("Using localStorage fallback for updateStock");
-        return localDb.updateStock(items);
-      }
-    },
-    getReceipts: async () => {
-      try {
-        return await getReceipts();
+        return await getReceipts(dateFrom, dateTo);
       } catch (error) {
         console.warn("Using localStorage fallback for getReceipts");
         return localDb.getReceipts();
@@ -195,14 +198,21 @@ export const useFallbackDb = () => {
         return localDb.createReceipt(receipt);
       }
     },
-    getSalesData: async () => {
+    getDashboardData: async () => {
       try {
-        return await getSalesData();
+        return await getDashboardData();
       } catch (error) {
-        console.warn("Using localStorage fallback for getSalesData");
+        console.warn("Using localStorage fallback for getDashboardData");
         return localDb.getSalesData();
       }
     },
-    seedDemoData: localDb.seedDemoData
+    seedDemoData: async () => {
+      try {
+        return await seedDemoData();
+      } catch (error) {
+        console.warn("Using localStorage fallback for seedDemoData");
+        return localDb.seedDemoData();
+      }
+    }
   };
 };
