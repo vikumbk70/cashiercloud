@@ -1,16 +1,23 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getDashboardData } from "@/lib/api";
 import { SalesData } from "@/types";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { toast } from "sonner";
 
 export function Dashboard() {
   const { data: salesData, isLoading, error } = useQuery({
     queryKey: ['dashboard'],
     queryFn: getDashboardData,
+    onError: (error) => {
+      toast.error("Failed to load dashboard data", {
+        description: "Using cached data from localStorage instead.",
+        duration: 5000,
+      });
+      console.error('Error loading dashboard data:', error);
+    }
   });
 
   if (isLoading) {
@@ -69,7 +76,7 @@ export function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
-              <Tooltip />
+              <RechartsTooltip />
               <Bar dataKey="sales" fill="#6366f1" />
             </BarChart>
           </ResponsiveContainer>

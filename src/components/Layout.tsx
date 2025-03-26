@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { Navbar } from "./Navbar";
 import { seedDemoData } from "@/lib/api";
+import { toast } from "sonner";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,7 +11,13 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   useEffect(() => {
     // Seed demo data when the app loads
-    seedDemoData();
+    seedDemoData().catch(error => {
+      toast.error("Couldn't connect to backend API. Using localStorage fallback.", {
+        description: "Some features may have limited functionality.",
+        duration: 5000,
+      });
+      console.error("Error seeding demo data:", error);
+    });
   }, []);
 
   return (
