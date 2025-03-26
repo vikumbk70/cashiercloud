@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
 import { Navbar } from "./Navbar";
-import { seedDemoData } from "@/lib/db";
+import { seedDemoData } from "@/lib/api";
 
 interface LayoutProps {
   children: React.ReactNode;

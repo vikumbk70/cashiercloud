@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -36,12 +35,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { getReceipts } from "@/lib/db";
+import { getReceipts } from "@/lib/api";
 import { Receipt } from "@/types";
 import { toast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 export default function ReceiptsPage() {
-  const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [filteredReceipts, setFilteredReceipts] = useState<Receipt[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -49,19 +48,14 @@ export default function ReceiptsPage() {
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   
-  useEffect(() => {
-    loadReceipts();
-  }, []);
+  const { data: receipts = [], isLoading, error } = useQuery({
+    queryKey: ['receipts', date],
+    queryFn: () => getReceipts(date, date),
+  });
   
   useEffect(() => {
     applyFilters();
   }, [receipts, searchTerm, date, sortDirection]);
-  
-  const loadReceipts = () => {
-    const data = getReceipts();
-    setReceipts(data);
-    setFilteredReceipts(data);
-  };
   
   const applyFilters = () => {
     let filtered = [...receipts];
@@ -72,18 +66,6 @@ export default function ReceiptsPage() {
         receipt.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         receipt.items.some(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
       );
-    }
-    
-    // Apply date filter
-    if (date) {
-      filtered = filtered.filter(receipt => {
-        const receiptDate = new Date(receipt.createdAt);
-        return (
-          receiptDate.getFullYear() === date.getFullYear() &&
-          receiptDate.getMonth() === date.getMonth() &&
-          receiptDate.getDate() === date.getDate()
-        );
-      });
     }
     
     // Apply sorting
@@ -251,7 +233,24 @@ export default function ReceiptsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredReceipts.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-6">
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <div className="font-medium">Loading receipts...</div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-6 text-destructive">
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <div className="font-medium">Error loading receipts</div>
+                      <div className="text-sm">Please try again later.</div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredReceipts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                     <div className="flex flex-col items-center justify-center space-y-1">
